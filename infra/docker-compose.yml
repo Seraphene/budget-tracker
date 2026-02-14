@@ -1,0 +1,43 @@
+﻿services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: budget_tracker_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: budget
+      POSTGRES_PASSWORD: budget
+      POSTGRES_DB: budget
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: budget_tracker_n8n
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678
+      N8N_EDITOR_BASE_URL: http://localhost:5678
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: admin123
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: budget
+      DB_POSTGRESDB_USER: budget
+      DB_POSTGRESDB_PASSWORD: budget
+      GENERIC_TIMEZONE: Asia/Manila
+      SERPER_API_KEY: ""
+      GEMINI_API_KEY: ""
+    volumes:
+      - ./n8n_data:/home/node/.n8n
